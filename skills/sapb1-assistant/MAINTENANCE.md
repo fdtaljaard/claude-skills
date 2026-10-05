@@ -225,7 +225,12 @@ contains them). The raw metadata is maintenance input only and must not be commi
    snapshot tested on 2026-10-05 did both. Never publish a customer's custom surface. If a clean company is
    unavailable, inspect names manually, use repeatable `--exclude-regex` filters for known custom entities and
    `--exclude-property-regex '^U_'` (or a reviewed narrower pattern) for customer UDFs; the generated
-   `INDEX.md` records both filter families.
+   `INDEX.md` records both filter families. Property patterns match bare property **and navigation-property**
+   names; only a pattern containing `/` is also matched against the fully-qualified `Namespace.Type/Property`
+   target, so an unanchored fragment such as `Document` cannot strip a whole type by matching its name. Key
+   properties are never removed (the builder keeps them, warns on stderr and reports `kept_key_properties`).
+   A trimmed type gets a count-only `Filtered properties: N` line and a Filtered count in `api/INDEX.md`;
+   removed names are never written to the output.
 3. **Build** into a scratch output first:
    `python scripts/build_servicelayer_ref.py <metadata.edmx> <out> --verified YYYY-MM-DD --label "SAP Business One 10.0 FP 2602" --source "Service Layer /b1s/v2/$metadata"`.
    The builder rejects non-v4 metadata, bundles entries through the shared `bundle_util.py` (about 1 MB per
@@ -237,7 +242,8 @@ contains them). The raw metadata is maintenance input only and must not be commi
 4. **Run the builder tests**:
    `python scripts/test_build_servicelayer_ref.py`.
    They cover EntityType/ComplexType, entity sets, bound/global operations, enums, scalar annotations,
-   custom-name exclusion, property/UDF exclusion and rejecting v3 metadata.
+   custom-name exclusion, property/UDF exclusion (bare name, `Type/Property` target, navigation properties,
+   key-property protection, filtered counts) and rejecting v3 metadata.
 5. **Sanity-check the real snapshot before committing generated output**: inspect the counts; confirm well-known
    entities/types such as Orders/Document, BusinessPartners/BusinessPartner and DocumentLine; confirm at least one
    bound action and one global operation; inspect enum members; grep the generated files for company-specific

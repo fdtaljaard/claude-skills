@@ -55,8 +55,9 @@ def _scalar(ann: ET.Element) -> str | None:
 
 
 # CSDL allows annotations in two places: inline as <Annotation> children of the annotated element, or
-# out-of-line in <Annotations Target="Namespace.Type/Property"> blocks anywhere in the schema. Which form
-# SAP's FP 2608+ metadata uses has not been seen yet, so both are read; `out_of_line` is keyed by Target.
+# out-of-line in <Annotations Target="Namespace.Type/Property"> blocks anywhere in the schema. The first real
+# FP 2602 snapshot (2026-10-05) used inline annotations only, but both forms are read because CSDL permits
+# both and later feature packs may differ; `out_of_line` is keyed by Target.
 def annotations(el: ET.Element, target: str = "", out_of_line: dict[str, list[str]] | None = None) -> list[str]:
     out = [s for s in (_scalar(a) for a in el.findall(q(EDM, "Annotation"))) if s]
     if out_of_line and target:
@@ -93,6 +94,7 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
         raise SystemExit(f"Output directory is not empty: {out}. Build into an empty scratch directory.")
     excluded: set[str] = set()
     excluded_properties: set[str] = set()
+    kept_key_properties: set[str] = set()
     property_excludes = property_excludes or []
     ool = collect_out_of_line(schemas)
 
@@ -101,6 +103,21 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
             excluded.add(name)
             return True
         return False
+
+    def excluded_property(type_name: str, name: str, keys: list[str]) -> bool:
+        # Patterns match the bare property/navigation name. Only a pattern containing "/" is also matched
+        # against the fully-qualified Type/Property target, so an unanchored name fragment cannot strip every
+        # property of a type whose *name* happens to match. Key properties are never removed: dropping one
+        # would leave the Key header and the type index pointing at a property that is no longer listed.
+        target = f"{type_name}/{name}"
+        if not any(rx.search(name) or ("/" in rx.pattern and rx.search(target)) for rx in property_excludes):
+            return False
+        if name in keys:
+            kept_key_properties.add(target)
+            print(f"warning: kept key property {target} although it matches a property exclusion filter", file=sys.stderr)
+            return False
+        excluded_properties.add(target)
+        return True
 
     type_entries, type_rows, member_lines = [], [], []
     enum_entries, enum_rows, enum_member_lines = [], [], []
@@ -115,22 +132,24 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
                 if blocked(full):
                     continue
                 keys = [x.attrib.get("Name", "") for x in el.findall(f"{q(EDM,'Key')}/{q(EDM,'PropertyRef')}")]
-                raw_props = el.findall(q(EDM, "Property"))
-                props = []
-                for p in raw_props:
-                    prop_name = p.attrib.get("Name", "")
-                    target = f"{full}/{prop_name}"
-                    if any(rx.search(prop_name) or rx.search(target) for rx in property_excludes):
-                        excluded_properties.add(target)
-                        continue
-                    props.append(p)
-                navs = el.findall(q(EDM, "NavigationProperty"))
+                props, navs, filtered = [], [], 0
+                for p in el.findall(q(EDM, "Property")):
+                    if excluded_property(full, p.attrib.get("Name", ""), keys):
+                        filtered += 1
+                    else:
+                        props.append(p)
+                for n in el.findall(q(EDM, "NavigationProperty")):
+                    if excluded_property(full, n.attrib.get("Name", ""), keys):
+                        filtered += 1
+                    else:
+                        navs.append(n)
                 lines = [f"# {full} ({kind})", ""]
                 for text in ([f"BaseType: {el.attrib['BaseType']}"] if el.attrib.get("BaseType") else []) + \
                             (["Abstract: true"] if truth(el.attrib.get("Abstract")) else []) + \
                             (["OpenType: true"] if truth(el.attrib.get("OpenType")) else []) + \
                             (["HasStream: true"] if truth(el.attrib.get("HasStream")) else []) + \
-                            (["Key: " + ", ".join(keys)] if keys else []):
+                            (["Key: " + ", ".join(keys)] if keys else []) + \
+                            ([f"Filtered properties: {filtered}"] if filtered else []):
                     lines.append(text)
                 if len(lines) > 2:
                     lines.append("")
@@ -155,7 +174,8 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
                     lines += ["## Scalar annotations", ""] + [f"- {a}" for a in anns] + [""]
                 type_entries.append((full, "\n".join(lines).rstrip() + "\n"))
                 type_rows.append(dict(name=full, kind=kind, keys=", ".join(keys), props=len(props), navs=len(navs),
-                                      open=truth(el.attrib.get("OpenType")), base=el.attrib.get("BaseType", "")))
+                                      filtered=filtered, open=truth(el.attrib.get("OpenType")),
+                                      base=el.attrib.get("BaseType", "")))
 
         for el in schema.findall(q(EDM, "EnumType")):
             full = f"{ns}.{el.attrib['Name']}" if ns else el.attrib["Name"]
@@ -255,12 +275,12 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
         sets_by_type.setdefault(es["type"], []).append(es["name"])
 
     lines = [provenance, "", "# Service Layer metadata type index", "",
-             "| Type | Kind | Key | Properties | Navigation | Open | BaseType | Entity sets | File | Line | Lines |",
-             "|---|---|---|---:|---:|---|---|---|---|---:|---:|"]
+             "| Type | Kind | Key | Properties | Navigation | Filtered | Open | BaseType | Entity sets | File | Line | Lines |",
+             "|---|---|---|---:|---:|---:|---|---|---|---|---:|---:|"]
     for r in type_rows:
         f, ln, n = type_locs[r["name"]]
         sets = ", ".join(sets_by_type.get(r["name"], []))
-        lines.append(f"| {r['name']} | {r['kind']} | {r['keys']} | {r['props']} | {r['navs']} | {'yes' if r['open'] else ''} | {r['base']} | {sets} | {f} | {ln} | {n} |")
+        lines.append(f"| {r['name']} | {r['kind']} | {r['keys']} | {r['props']} | {r['navs']} | {r['filtered'] or ''} | {'yes' if r['open'] else ''} | {r['base']} | {sets} | {f} | {ln} | {n} |")
     (out / "api" / "INDEX.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (out / "api" / "members.md").write_text(provenance + "\n\n# Service Layer metadata members\n\n" + "\n".join(member_lines) + "\n", encoding="utf-8")
 
@@ -300,12 +320,13 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
         "functions": sum(r["kind"] == "Function" for r in op_rows),
         "enums": len(enum_rows), "enum_members": len(enum_member_lines),
         "excluded": len(excluded), "excluded_properties": len(excluded_properties),
+        "kept_key_properties": len(kept_key_properties),
     }
     namespaces = ", ".join(s.attrib.get("Namespace", "") for s in schemas if s.attrib.get("Namespace"))
     lines = [provenance, "", "# Service Layer generated metadata reference", "",
              f"Built from an OData v4 `$metadata` snapshot. Namespaces: {namespaces or '(none)' }.", "",
              "| Path | Covers |", "|---|---|",
-             "| `api/INDEX.md` | EntityType and ComplexType routing: keys, counts, OpenType, BaseType, entity sets, bundle location |",
+             "| `api/INDEX.md` | EntityType and ComplexType routing: keys, counts, filtered-property count, OpenType, BaseType, entity sets, bundle location |",
              "| `api/members.md` | Flat `Type.Property : ODataType` index |",
              "| `api/types-NN.md` | Full bundled type entries |",
              "| `entity-sets.md` | Entity sets, containers, navigation bindings and scalar annotations |",
@@ -320,12 +341,15 @@ def build(metadata: Path, out: Path, verified: str, label: str, source: str, exc
     lines += ["", "## Scope", "",
               "- This is a snapshot of one Service Layer OData v4 metadata document; another feature pack can expose a different surface.",
               "- A company can expose UDF properties explicitly in `$metadata`, including on `OpenType=true` types. Use property exclusion filters for a shared snapshot when the source company contains customer UDFs.",
+              "- A type whose properties or navigation properties were removed by a property exclusion filter carries a count-only `Filtered properties: N` line and a Filtered count in `api/INDEX.md`; removed names are never written. Key properties are never removed.",
               "- A company can expose client-specific UDO/entity sets. Prefer a clean demo company or review/exclude custom names before committing a shared reference.",
               "- Core CSDL and compact scalar annotations (inline and out-of-line `Annotations Target=`) are extracted; complex annotation expression trees remain in the source metadata."]
     if excludes:
         lines += ["", "## Exclusion filters", ""] + [f"- generated name: `{rx.pattern}`" for rx in excludes]
     if property_excludes:
-        lines += ["", "## Property exclusion filters", ""] + [f"- property/name target: `{rx.pattern}`" for rx in property_excludes]
+        lines += ["", "## Property exclusion filters", "",
+                  "Matched against property and navigation-property names; a pattern containing `/` is also matched against the `Namespace.Type/Property` target.", ""]
+        lines += [f"- property/name target: `{rx.pattern}`" for rx in property_excludes]
     (out / "INDEX.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return counts
 
@@ -339,7 +363,8 @@ def main() -> None:
     ap.add_argument("--source", default="local /b1s/v2/$metadata snapshot", help="provenance text; never include credentials")
     ap.add_argument("--exclude-regex", action="append", default=[], help="repeatable regex matched against fully-qualified generated names")
     ap.add_argument("--exclude-property-regex", action="append", default=[],
-                    help="repeatable regex matched against property names and fully-qualified Type/Property targets")
+                    help="repeatable regex matched against property and navigation-property names; a pattern containing '/' "
+                         "is also matched against the fully-qualified Namespace.Type/Property target; key properties are never removed")
     ap.add_argument("--max-bytes", type=int, default=MAX_BYTES, help="bundle size before a bundle file is split")
     args = ap.parse_args()
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.verified):

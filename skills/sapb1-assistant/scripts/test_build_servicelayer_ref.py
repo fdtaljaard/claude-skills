@@ -23,6 +23,7 @@ V4 = '''<?xml version="1.0" encoding="utf-8"?>
   <EntityType Name="Document" OpenType="true"><Key><PropertyRef Name="DocEntry"/></Key>
    <Property Name="DocEntry" Type="Edm.Int32" Nullable="false"/>
    <Property Name="DocumentLines" Type="Collection(SAPB1.DocumentLine)"/>
+   <NavigationProperty Name="U_CustomLink" Type="SAPB1.Document"/>
   </EntityType>
   <Annotations Target="SAPB1.Document/DocEntry"><Annotation Term="Common.Label" String="Document Entry"/></Annotations>
   <Annotations Target="SAPB1.Document"><Annotation Term="SAPB1.TableName" String="ORDR"/></Annotations>
@@ -83,11 +84,40 @@ class BuildServiceLayerRefTests(unittest.TestCase):
 
     def test_exclude_property_regex_removes_client_udfs(self):
         out, counts = self.build(property_excludes=(r"^U_",))
-        self.assertEqual(counts["excluded_properties"], 1)
+        self.assertEqual(counts["excluded_properties"], 2)  # U_ClientField property + U_CustomLink navigation
+        self.assertEqual(counts["kept_key_properties"], 0)
         members = (out / "api" / "members.md").read_text()
         self.assertIn("SAPB1.DocumentLine.ItemCode", members)
         self.assertNotIn("U_ClientField", members)
+        types = (out / "api" / "types-01.md").read_text()
+        self.assertNotIn("U_CustomLink", types)
+        self.assertNotIn("U_ClientField", types)
+        self.assertIn("Filtered properties: 1", types)
+        index = (out / "api" / "INDEX.md").read_text()
+        self.assertIn("| SAPB1.DocumentLine | ComplexType |  | 1 | 0 | 1 |", index)
+        self.assertIn("| SAPB1.Document | EntityType | DocEntry | 2 | 0 | 1 |", index)
         self.assertIn("property/name target: `^U_`", (out / "INDEX.md").read_text())
+
+    def test_property_target_match_requires_slash_in_pattern(self):
+        # An unanchored name fragment must not match the type name through the Type/Property target.
+        out, counts = self.build(property_excludes=(r"^SAPB1\.",))
+        self.assertEqual(counts["excluded_properties"], 0)
+        self.assertIn("SAPB1.DocumentLine.ItemCode", (out / "api" / "members.md").read_text())
+        self.tearDown(); self.setUp()
+        out, counts = self.build(property_excludes=(r"DocumentLine/U_",))
+        self.assertEqual(counts["excluded_properties"], 1)
+        members = (out / "api" / "members.md").read_text()
+        self.assertNotIn("U_ClientField", members)
+        self.assertIn("SAPB1.Document.DocumentLines", members)
+
+    def test_key_properties_survive_property_filter(self):
+        out, counts = self.build(property_excludes=(r"DocEntry",))
+        self.assertEqual(counts["excluded_properties"], 0)
+        self.assertEqual(counts["kept_key_properties"], 1)
+        types = (out / "api" / "types-01.md").read_text()
+        self.assertIn("Key: DocEntry", types)
+        self.assertIn("- DocEntry : Edm.Int32", types)
+        self.assertNotIn("Filtered properties", types)
 
     def test_index_ranges_point_at_entries(self):
         out, _ = self.build()

@@ -30,7 +30,9 @@ The `<control>` block of each response (sender ID), the session ID, the endpoint
 are never written; the script refuses to write any file in which one of those values appears. Objects whose name
 is not upper-case letters, digits and underscores are treated as custom (Platform Services) objects and dropped;
 a standard object wrongly dropped by that rule is added back with `--objects NAME` into the same --out, which
-merges into the existing dump (the object is restored in inspect.xml and the manifest is updated, not replaced).
+merges into the existing dump (the object is restored in inspect.xml, the objects whose relationships to it were
+scrubbed are looked up again, and the manifest is updated, not replaced). A full dump refuses an --out that already
+holds lookup files, so files of an earlier run are never counted or packed as this run's.
 Review `dropped.txt` and the output before sharing it. `--pack` then writes the zip that is committed under
 `sources/sageintacct-assistant/`: `inspect.xml` with the document objects collapsed (`inspect` lists `SODOCUMENT`,
 `PODOCUMENT`, `INVDOCUMENT`, their lines and recurring variants once per transaction definition, the generic entry
@@ -147,16 +149,20 @@ def scrub_fields(data):
     return removed
 
 
-def scrub_relationships(data, custom_objects=()):
+def scrub_relationships(data, custom_objects=(), readded=()):
     """Remove every Relationship whose related object is not a standard name, or is a removed custom object (a custom
     Platform Services object or user-defined dimension would otherwise keep its name in OBJECTNAME / OBJECTPATH /
-    LABEL); return the object paths removed."""
-    removed, custom = [], set(custom_objects)
+    LABEL); return the object paths removed. Objects re-added with --objects (`readded`) count as standard."""
+    removed, custom, readded = [], set(custom_objects), set(readded)
+
+    def standard(name):
+        return bool(STANDARD_NAME.match(name)) or name in readded
+
     for parent in data.iter():
         for child in list(parent):
             if child.tag.lower() == "relationship":
                 obj, path = child_text(child, "objectname"), child_text(child, "objectpath")
-                if not STANDARD_NAME.match(obj) or obj in custom or not STANDARD_NAME.match(path or obj):
+                if obj in custom or not standard(obj) or not standard(path or obj):
                     removed.append(path or obj or "?")
                     parent.remove(child)
     return removed
@@ -236,8 +242,8 @@ def counts_only(value):
 
 def identifier_pattern(value):
     """Match `value` as a whole token, case-insensitively, so a short ID such as `admin` does not refuse a clean
-    payload over the word 'Administrator'."""
-    return re.compile(r"(?<![A-Za-z0-9_])" + re.escape(value) + r"(?![A-Za-z0-9_])", re.I)
+    payload over the word 'Administrator'. Underscores separate tokens, so `acme` still matches `ACME_US`."""
+    return re.compile(r"(?<![A-Za-z0-9])" + re.escape(value) + r"(?![A-Za-z0-9])", re.I)
 
 
 def pack(folder, zip_path, allow_missing_identifiers=False):
@@ -253,6 +259,7 @@ def pack(folder, zip_path, allow_missing_identifiers=False):
         manifest = json.load(f)
     custom_objects = manifest.get("custom_objects_removed", [])
     custom_objects = custom_objects if isinstance(custom_objects, list) else []
+    readded = manifest.get("readded_objects", [])
     lookups, fields_removed, rels_removed = [], {}, {}
     for name in sorted(os.listdir(os.path.join(folder, "lookup"))):
         if not name.endswith(".xml"):
@@ -260,7 +267,7 @@ def pack(folder, zip_path, allow_missing_identifiers=False):
         with open(os.path.join(folder, "lookup", name), encoding="utf-8") as f:
             data = ET.fromstring(f.read())
         obj = name[:-4]
-        rf, rr = scrub_fields(data), scrub_relationships(data, custom_objects)  # a no-op on a scrubbed dump
+        rf, rr = scrub_fields(data), scrub_relationships(data, custom_objects, readded)  # a no-op on a scrubbed dump
         if rf:
             fields_removed[obj] = len(rf)
         if rr:
@@ -335,17 +342,21 @@ def main():
         print("then: <function controlid=\"...\"><lookup><object>APBILL</object></lookup></function> (batched)")
         return
 
+    lookup_dir = os.path.join(args.out, "lookup")
+    manifest_path = os.path.join(args.out, "manifest.json")
+    inspect_path = os.path.join(args.out, "inspect.xml")
+    merging = args.objects is not None and os.path.exists(manifest_path)
+    if not merging and os.path.isdir(lookup_dir) and any(n.endswith(".xml") for n in os.listdir(lookup_dir)):
+        # files of an earlier run would be counted and packed as if this run had produced them
+        sys.exit(f"{lookup_dir} already holds lookup files: use an empty --out for a full dump "
+                 "(--objects NAME merges into an existing dump instead)")
+    os.makedirs(lookup_dir, exist_ok=True)
+
     sender_id, sender_pw = env("INTACCT_SENDER_ID"), env("INTACCT_SENDER_PASSWORD")
     company_id, user_id, user_pw = env("INTACCT_COMPANY_ID"), env("INTACCT_USER_ID"), env("INTACCT_USER_PASSWORD")
     location_id = env("INTACCT_LOCATION_ID", required=False)
     endpoint = env("INTACCT_ENDPOINT", required=False) or DEFAULT_ENDPOINT
     secrets = [v for v in (sender_id, sender_pw, company_id, user_id, user_pw) if v]
-
-    lookup_dir = os.path.join(args.out, "lookup")
-    os.makedirs(lookup_dir, exist_ok=True)
-    manifest_path = os.path.join(args.out, "manifest.json")
-    inspect_path = os.path.join(args.out, "inspect.xml")
-    merging = args.objects is not None and os.path.exists(manifest_path)
 
     def guarded_write(path, text, mode="w"):
         for s in secrets + [session_id, session_endpoint]:
@@ -396,6 +407,9 @@ def main():
         if unknown:
             sys.exit("inspect does not list: " + ", ".join(unknown))
         names = requested
+        if merging and readded:
+            # their relationships to a re-added object were scrubbed in the earlier run: look them up again
+            names += [n for n in manifest.get("custom_relationships_removed", {}) if n in standard and n not in names]
     else:
         names = standard
     if merging:
@@ -416,7 +430,7 @@ def main():
     time.sleep(args.delay)
 
     # 3. lookups, batched
-    custom_set = set(manifest["custom_objects_removed"])
+    custom_set, readded_set = set(manifest["custom_objects_removed"]), set(manifest["readded_objects"])
     for i in range(0, len(names), args.batch):
         batch = names[i:i + args.batch]
         fx = "".join(f'      <function controlid="{escape(n)}"><lookup><object>{escape(n)}</object></lookup></function>\n' for n in batch)
@@ -438,13 +452,17 @@ def main():
                 manifest["lookups_failed"][n] = "no data element"
                 continue
             removed_fields = scrub_fields(rdata)
-            removed_rels = scrub_relationships(rdata, custom_set)
+            removed_rels = scrub_relationships(rdata, custom_set, readded_set)
             if removed_fields:
                 manifest["custom_fields_removed"][n] = removed_fields
                 dropped += [f"field {n}.{f} (ISCUSTOM true)" for f in removed_fields]
+            else:
+                manifest["custom_fields_removed"].pop(n, None)  # a re-lookup in a merge replaces the earlier entry
             if removed_rels:
                 manifest["custom_relationships_removed"][n] = removed_rels
                 dropped += [f"relationship {n} -> {p} (non-standard related object)" for p in removed_rels]
+            else:
+                manifest["custom_relationships_removed"].pop(n, None)
             guarded_write(os.path.join(lookup_dir, f"{n}.xml"), ET.tostring(rdata, encoding="unicode"))
             manifest["lookups_failed"].pop(n, None)
         done = min(i + args.batch, len(names))

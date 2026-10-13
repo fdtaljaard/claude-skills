@@ -15,8 +15,10 @@ don't assert it — say it needs confirming.
 
 A few hard lines the skills already hold, which contributions must keep:
 
-- **Never generate SQL that modifies vendor-owned tables** (no INSERT/UPDATE/DELETE on Sage/SAP tables).
-  Read-only views, queries and diagnostics only; the correct write path is the vendor's API/SDK.
+- **Never generate SQL that modifies vendor-owned tables** (no INSERT/UPDATE/DELETE on any vendor's tables).
+  Read-only views, queries and diagnostics only; the correct write path is the vendor's API/SDK. Where a
+  product has no supported direct database access at all (QuickBooks Desktop's `.QBW`), the skill says so
+  and routes every read and write through the vendor's API.
 - **Don't guess versions, enum values or field names.** Look them up in the references or the vendor docs.
 - **Match the client's product version** when it changes the answer.
 
@@ -28,13 +30,22 @@ These follow the [Agent Skills](https://agentskills.io/specification) format:
 skills/<skill-name>/
   SKILL.md        # entry point loaded on activation — routing, ground rules, one workflow per capability,
                   # gotchas, layout. Keep under ~500 lines / 5,000 tokens; bulk goes to references/.
+  README.md       # the human-facing page: what it does, example prompts, install steps, disclaimer
   references/     # the bundled lookup material, one hop from SKILL.md, each folder with an INDEX.md
-  scripts/        # maintenance tooling to (re)build references — never needed at runtime
+  scripts/        # maintenance tooling: package_skill.py plus any reference builders — never needed at runtime
   evals/evals.json# a few prompts per capability with an expected_output, as a quality check
   MAINTENANCE.md  # how the skill is built and kept current
 ```
 
 Each skill's `MAINTENANCE.md` is the authoritative guide for changing it — read it before editing that skill.
+
+Every file under `references/` (other than `INDEX.md`) starts with a provenance comment on its first line:
+`<!-- source: <vendor document(s)> | version: <product/spec version> | verified: YYYY-MM-DD -->`. The source
+names the vendor document the facts came from, not "author knowledge"; a file written from memory is a
+draft until it has been checked against the vendor's documentation, and its header and `INDEX.md` row say
+what still needs confirming. Each folder's `INDEX.md` repeats the source and verified date per file.
+
+Eval scratch output (`skills/<skill-name>-workspace/`) is ignored by git and is never committed.
 
 ## Making a change
 
@@ -45,8 +56,10 @@ Each skill's `MAINTENANCE.md` is the authoritative guide for changing it — rea
    the output, and say so in the PR.
 3. **Adding a capability or skill:** follow the "Add a capability" section in the relevant `MAINTENANCE.md`
    (routing row + workflow section + a `references/<domain>/` subtree with its own `INDEX.md`), keep `SKILL.md`
-   under budget, and add at least two evals (one typical, one edge case). A new skill also needs a row in
-   `README.md`, a disclaimer paragraph if it bundles vendor material, and registration in
+   under budget, and add at least two evals (one typical, one edge case). A new skill also needs its own
+   `README.md` and `MAINTENANCE.md`, a `scripts/package_skill.py` (copy it from an existing skill), a row in
+   the root `README.md` skill table plus its `/plugin install` line and product name in the install section,
+   a disclaimer paragraph there if it bundles or describes vendor material, and registration in
    `.claude-plugin/marketplace.json`.
 4. **Don't commit vendor source material** (CHMs, DLLs, raw SDK help). It is kept out of git (see `.gitignore`)
    and only the extracted, attributed references are committed. Respect the vendors' terms. The one exception is
@@ -55,7 +68,9 @@ Each skill's `MAINTENANCE.md` is the authoritative guide for changing it — rea
    removed). Those live under `sources/<skill-name>/`, outside the packaged skill, with a README saying how each
    was scrubbed.
 5. **Check it:** `SKILL.md` frontmatter valid (`name` matches the folder, `description` ≤ 1024 chars,
-   `compatibility` ≤ 500), no broken relative links, and every file the skill claims actually exists.
+   `compatibility` ≤ 500), no broken relative links, every file the skill claims actually exists, and every
+   reference file carries its provenance header. Running the skill's `scripts/package_skill.py` checks the
+   frontmatter for you and refuses to package on a failure.
 
 ## Pull requests
 

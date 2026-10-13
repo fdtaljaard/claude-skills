@@ -16,10 +16,12 @@ from the bundled files in `references/` and the discipline of citing them or the
 
 ## Current state of the references
 
-The bundled references were written from the stable QuickBooks Desktop SDK (qbXML spec through 16.0, the
-last major version) and general author knowledge. They are a **curated, structural** reference — the
-object model, the common objects, correct QBFC idioms, and connectivity — **not** a complete field dump.
-That is the main opportunity to raise rigor (below).
+The bundled references are **drafts**: written on 2026-10-06 from author knowledge of the stable QuickBooks
+Desktop SDK (qbXML spec through 16.0, the last major version) and **not yet checked** against Intuit's
+documentation. Each file's provenance header says what still needs confirming; when a file has been checked,
+replace its `DRAFT` header with the documents it was checked against and the date, and update its `INDEX.md` row.
+They are a **curated, structural** reference — the object model, the common objects, correct QBFC idioms, and
+connectivity — **not** a complete field dump. That is the main opportunity to raise rigor (below).
 
 ## Raising rigor: bundle real OSR data
 
@@ -57,12 +59,16 @@ note the new `SupportedQBXMLVersion` expectations.
 
 ## Packaging and validation
 
-Package the skill into a `.skill` file for upload to the Claude desktop app / claude.ai with the
-skill-creator's packaging script:
+Package the skill into a `.skill` file for upload to the Claude desktop app / claude.ai with the bundled
+packaging script, run from the repository root (needs PyYAML):
 
 ```bash
-python -m scripts.package_skill <path-to>/skills/quickbooksdesktop-assistant
+python skills/quickbooksdesktop-assistant/scripts/package_skill.py skills/quickbooksdesktop-assistant dist
 ```
+
+It validates the frontmatter (`name` matches the folder, `description` <= 1024 characters, `compatibility`
+<= 500) and refuses to write the archive on any failure. `scripts/` is maintenance tooling only and is never
+needed at runtime.
 
 Before packaging, sanity-check that:
 - `SKILL.md` frontmatter `name` is `quickbooksdesktop-assistant` and the `description` is trigger-rich.

@@ -1,3 +1,4 @@
+<!-- source: DRAFT, written from author knowledge of the QuickBooks Desktop SDK QBFC programmer's guide and qbXML spec, developer.intuit.com; not yet checked against them. To confirm: each pattern and its stated failure against the SDK documentation | version: QBFC / qbXML 16.0 | verified: not yet (draft written 2026-10-06) -->
 # QBFC / qbXML — common mistakes (and why)
 
 Read before writing code. Each is a real pattern that passes on a developer's machine and fails at a

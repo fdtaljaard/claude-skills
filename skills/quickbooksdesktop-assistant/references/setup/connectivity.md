@@ -1,3 +1,4 @@
+<!-- source: DRAFT, written from author knowledge of the QuickBooks Desktop SDK programmer's guide (connection, session, authorization) and Web Connector programmer's guide, developer.intuit.com; not yet checked against them. To confirm: open modes, the QBWC callback sequence and every HRESULT against those guides | version: SDK 16.0 / Web Connector 2.x | verified: not yet (draft written 2026-10-06) -->
 # Setup & connectivity
 
 How a program actually reaches a QuickBooks Desktop company file, and why connections fail. Pin the

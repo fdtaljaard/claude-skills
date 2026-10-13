@@ -1,3 +1,4 @@
+<!-- source: DRAFT, written from author knowledge of the QuickBooks Desktop SDK QBFC programmer's guide and QBFC type library (Interop.QBFC), developer.intuit.com; not yet checked against them. To confirm: every method signature and enum member (ENOpenMode, ENRqOnError, ENResponseType) against the installed type library | version: QBFC 16.0 | verified: not yet (draft written 2026-10-06) -->
 # QBFC in C# — the correct idioms
 
 QBFC (QuickBooks Foundation Classes) is the **typed COM wrapper** over qbXML. Prefer it for C# because the

@@ -188,6 +188,7 @@ references/qbfc/     INDEX.md, csharp.md (correct QBFC idioms: session → msg s
 references/setup/    INDEX.md, connectivity.md (QBFC vs QBXMLRP2 vs QBWC, connection/open modes,
                      authorization & certificate, 32-bit/STA constraints, error signatures)
 evals/evals.json     test prompts per capability
+scripts/             package_skill.py (maintenance packaging only, never needed at runtime)
 MAINTENANCE.md       how to bundle real OSR data, add a capability, refresh for a new SDK version
 ```
 

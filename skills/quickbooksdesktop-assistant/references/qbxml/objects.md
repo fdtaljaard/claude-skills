@@ -1,3 +1,4 @@
+<!-- source: DRAFT, written from author knowledge of the QuickBooks Desktop SDK qbXML spec and Intuit OSR (onscreen reference), developer.intuit.com; not yet checked against them. To confirm: every object's fields, OR members and introducing version in the OSR | version: qbXML through 16.0 | verified: not yet (draft written 2026-10-06) -->
 # qbXML object catalogue
 
 A working catalogue of the lists and transactions most integrations touch, with their key fields, the OR

@@ -1,4 +1,95 @@
 {
   "skill_name": "sageintacct-assistant",
-  "evals": []
+  "evals": [
+    {
+      "id": 1,
+      "capability": "XML API (connect + session)",
+      "prompt": "We use Sage Intacct. Show me the XML to authenticate and then list the AP bills changed since yesterday, with paging.",
+      "expected_output": "Shows a getAPISession request alone in its own request (control with senderid/password placeholders, controlid, dtdversion 3.0, uniqueid false, login with userid/companyid/password placeholders), explains that the response's sessionid and endpoint must both be used afterwards, then a query on APBILL with select fields, a filter on WHENMODIFIED (or the date field the APBILL tables document) in mm/dd/yyyy, pagesize up to 2000 and offset, noting offset is not a cursor; cites api-basics.md § 3-4 and § 7.1 and the Bills page in objects/accounts-payable.md; uses no real credentials."
+    },
+    {
+      "id": 2,
+      "capability": "XML API (create, generic function)",
+      "prompt": "Create an AP bill for vendor V-100 dated today with two expense lines. Which fields are required?",
+      "expected_output": "A <create><APBILL> request with VENDORID, WHENCREATED (and WHENPOSTED where the table requires it) in mm/dd/yyyy, APBILLITEMS/APBILLITEM lines with ACCOUNTNO and TRX_AMOUNT (plus LOCATIONID if multi-entity), field names taken from the Create Bill parameters table in objects/accounts-payable.md and marked as such; notes the 2-decimal rounding, that TAXENTRIES apply to AU/GB/ZA only, and that uniqueid true with unique function controlids makes the write idempotent (api-basics.md § 3, § 5.3, § 8)."
+    },
+    {
+      "id": 3,
+      "capability": "XML API (query vs readByQuery, joined field)",
+      "prompt": "Why does readByQuery on EMPLOYEE with PERSONALINFO.LASTNAME = 'Smith' fail, and what should I use?",
+      "expected_output": "Explains from api-basics.md § 7.2 that dotted (joined) fields cannot be filtered with readByQuery; gives a query function on EMPLOYEE with an equalto filter on personalinfo.lastname and a select list, mentioning lookup to find the OBJECTPATH; cites the Queries facts in api-basics.md § 7.1 and the grammar in functions.md."
+    },
+    {
+      "id": 4,
+      "capability": "XML API (Order Entry create)",
+      "prompt": "Create a sales order in Sage Intacct for customer C-200 with one line of item WIDGET, quantity 5, on a multi-entity company.",
+      "expected_output": "Uses the legacy create_sotransaction (the only documented create for SODOCUMENT) with transactiontype set to the company's definition name (asks for it or marks it to confirm, pointing to SODOCUMENTPARAMS), datecreated as year/month/day, customerid, sotransitems/sotransitem with itemid, quantity and locationid (required when multi-entity), optional warehouseid, unit, price, documentno/state rules; elements in the documented order; cites oe-po-inventory.md § 1 and § 3.1 and the Order Entry Transactions page in objects/order-entry.md."
+    },
+    {
+      "id": 5,
+      "capability": "XML API (Purchasing receipt / conversion)",
+      "prompt": "How do I receive stock against an existing purchase order through the XML API?",
+      "expected_output": "Explains that receiving is creating the next document in the company's chain with create_potransaction using the receiving transaction definition, createdfrom set to the purchase order's document number and sourcelinekey on each potransitem (multi-document conversion needs the Construction subscription); required fields transactiontype, datecreated, vendorid, returnto/payto (null for vendor defaults), potransitems; notes the definition names are company configuration; cites oe-po-inventory.md § 3.2 and objects/purchasing.md."
+    },
+    {
+      "id": 6,
+      "capability": "XML API (line index)",
+      "prompt": "I read a sales order and line 'LINE_NO 0' needs its quantity changed. Write the update.",
+      "expected_output": "update_sotransaction with key = the document ID (record number for drafts) and updatesotransitems/updatesotransitem line_num=\"1\" (LINE_NO is zero-based in read, line_num one-based in the legacy update) with the new quantity; repeats the portal's warning to test before large-scale updates; cites api-basics.md § 6 and oe-po-inventory.md § 3.3."
+    },
+    {
+      "id": 7,
+      "capability": "XML API (inventory adjustment)",
+      "prompt": "Post an inventory adjustment of -3 for item WIDGET in warehouse WH1 with lot number L42.",
+      "expected_output": "create_ictransaction with the company's adjustment transaction definition, datecreated, ictransitems/ictransitem with itemid, warehouseid, quantity and itemdetails/itemdetail carrying lotno (and quantity), mentions adjdocentrykey for line-level adjustments and that INVDOCUMENT delete can be generic; cites oe-po-inventory.md § 3.4 and the Inventory Transactions page in objects/inventory-control.md."
+    },
+    {
+      "id": 8,
+      "capability": "XML API (errors and limits)",
+      "prompt": "Our nightly sync gets errorno GW-0010 after a few hundred calls. What is it and what do we change?",
+      "expected_output": "GW-0010 is the gateway's HTTP 429 rate limit (api-basics.md § 5.2); causes named by Sage are polling and concurrent loops or an inadequate level of service; recommends backoff and retry, batching several functions per request, keeping requests under about 100 written / 1,000 read records, respecting per-tenant concurrency, and asking Sage about alternatives to polling; states no numeric limit is published (api-basics.md § 10)."
+    },
+    {
+      "id": 9,
+      "capability": "XML API (field lookup, no invention)",
+      "prompt": "Which fields can I send when creating an ITEM, and does it have a BARCODE field?",
+      "expected_output": "Lists the Create Item parameters from objects/inventory-control.md (ITEMID, NAME, ITEMTYPE required with its six allowed values; STATUS, COST_METHOD, UOMGRP, GLGROUP, STANDARD_COST, BASEPRICE, TAXABLE, TAXGROUP and the nested tables as documented) and answers the BARCODE question from the two sources only: the create table and the ITEM block of the 2026 Release 3 snapshot (snapshot/objects.md row, then its fields-NN.md range); reports exactly what each says, and if the field is in neither, says so and recommends lookup on the company rather than asserting it exists."
+    },
+    {
+      "id": 10,
+      "capability": "XML API (enum / state codes)",
+      "prompt": "What does STATE = 'C' mean on SODOCUMENT in a readByQuery, and what are the other values?",
+      "expected_output": "From the query fields table of the Order Entry Transactions readByQuery (objects/order-entry.md, summarised in oe-po-inventory.md § 2): C = Converted; S Submitted, A Approved, X Partially Approved, R Declined, I Draft, O Pending, D Closed, G In Progress, P Partially Converted; notes that query/read use the display values lookup reports."
+    },
+    {
+      "id": 11,
+      "capability": "XML API (review)",
+      "prompt": "Review this: our client logs in with userid/companyid/password on every request, sends WHENCREATED as 2026-10-13, stores the AR invoice RECORDNO from the sales invoice it created, and retries failed requests with the same body.",
+      "expected_output": "Reports from common-mistakes.md: login per call instead of getAPISession (rule 3), ISO date instead of mm/dd/yyyy (21), storing the AR RECORDNO which changes when the OE transaction is updated, use PRRECORDKEY (29), and retries that need uniqueid true with unique function controlids (8, 9); orders data-affecting defects first; cites the rule numbers and backing sections."
+    },
+    {
+      "id": 12,
+      "capability": "Scope (REST API not covered)",
+      "prompt": "Give me the REST API call to create a vendor in Sage Intacct.",
+      "expected_output": "States that the REST API is not a reference-backed capability of this skill (planned, see MAINTENANCE.md), answers briefly with that caveat and a pointer to developer.sage.com, and offers the reference-backed XML API equivalent: create of VENDOR from objects/accounts-payable.md with the required fields named from its table."
+    },
+    {
+      "id": 13,
+      "capability": "XML API (multi-entity session)",
+      "prompt": "Our Intacct company is multi-entity. How do I post bills into the 'Cape Town' entity?",
+      "expected_output": "Two documented options from api-basics.md § 4 and § 9: an entity-level session (getAPISession with locationid Cape Town, or locationid in login) or a top-level session with LOCATIONID on each bill line; mentions showprivate for top-level queries into private entities and that subtotal templates are top-level only; uses placeholders."
+    },
+    {
+      "id": 14,
+      "capability": "XML API (function grammar)",
+      "prompt": "What elements does the query function accept and what are the limits on pagesize and the in operator?",
+      "expected_output": "From functions.md (query and type filteroption): select (field or count/avg/min/max/sum), object, docparid, filter (and/or or one of the 13 operators), orderby/order/field with ascending or descending, options (caseinsensitive, showprivate, returnformat), pagesize integer 1-2000 default 100, offset integer min 0 default 0; in/notin accept 1 to 1000 values, between exactly 2; cross-references api-basics.md § 7.1 for meanings."
+    },
+    {
+      "id": 15,
+      "capability": "XML API (snapshot: exact names and valid values)",
+      "prompt": "As the API reports it, what values can SODOCUMENT.STATE take, and what is the relationship path to query the customer's name from a sales document?",
+      "expected_output": "Reads snapshot/objects.md for the SODOCUMENT row, then the stated line range of fields-03.md; lists the STATE valid values exactly as the snapshot gives them (Submitted, Approved, Partially Approved, Declined, Draft, Pending, Closed, In Progress, Converted, Partially Converted, Converted By Line, Partially Converted By Line, Exception, Analyzing), marks them 'verified in the 2026 Release 3 snapshot', takes the customer OBJECTPATH from the object's relationships table for the query dot notation, notes that readByQuery uses single-character database codes instead (oe-po-inventory.md § 2), and that the snapshot was taken without docparid so definition-specific custom fields are absent."
+    }
+  ]
 }

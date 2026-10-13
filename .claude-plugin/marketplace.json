@@ -55,6 +55,13 @@
       "source": "./",
       "strict": false,
       "skills": ["./skills/cin7-assistant"]
+    },
+    {
+      "name": "sageintacct-assistant",
+      "description": "Sage Intacct cloud financial management / ERP assistant for consultants and integrators: XML Web Services API integration development from a bundled extraction of the Sage Intacct developer portal and Sage's DTD 3.0 request schema: the request envelope, sessions and endpoints, status levels and error categories with recovery, the query and readByQuery grammar and paging, date and number formats, multi-entity rules, limits and asynchronous processing, every documented object page (197 pages, 1,694 operations in 17 modules) with parameter tables, examples and release history, the 52 generic functions and 243 legacy function names, exact names and valid values from a 2026 Release 3 object-definition snapshot (632 objects, 21,342 fields), an Order Entry / Purchasing / Inventory Control guide, and a 36-rule common-mistakes checklist for reviews. The REST API is not covered yet. More capabilities to follow.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/sageintacct-assistant"]
     }
   ]
 }

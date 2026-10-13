@@ -13,3 +13,6 @@ skills/sapb1-assistant/references/*.pdf
 
 # Eval workspaces (scratch/test artifacts, regenerated locally)
 *-workspace/
+
+# Scrubbed, machine-generated builder inputs under sources/ may be archives; keep those
+!sources/**/*.zip

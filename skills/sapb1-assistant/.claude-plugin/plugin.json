@@ -1,0 +1,23 @@
+{
+  "name": "sapb1-assistant",
+  "displayName": "SAP Business One Assistant",
+  "description": "SAP Business One (B1) ERP assistant: object type number, table and primary key lookup from a bundled list of all B1 object types, verified SQL views/queries from bundled B1 10.0 and 9.3 data dictionaries, C# development against the DI API from a bundled DI API 10.0 class and enum reference, and Service Layer (REST / OData v4) integration guidance including SQLQueries and FP 2602 webhooks. More capabilities to follow.",
+  "author": {
+    "name": "Francois Taljaard",
+    "url": "https://github.com/fdtaljaard"
+  },
+  "homepage": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/sapb1-assistant",
+  "repository": "https://github.com/fdtaljaard/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "sap-business-one",
+    "erp",
+    "sql",
+    "di-api",
+    "service-layer"
+  ],
+  "icon": "./icon.png",
+  "documentationUrl": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/sapb1-assistant#readme",
+  "supportUrl": "https://github.com/fdtaljaard/claude-skills/issues",
+  "privacyPolicyUrl": "https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md"
+}

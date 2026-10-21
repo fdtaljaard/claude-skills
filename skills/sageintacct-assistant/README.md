@@ -42,6 +42,17 @@ python skills/sageintacct-assistant/scripts/package_skill.py skills/sageintacct-
 - [`evals/evals.json`](evals/evals.json) holds test prompts per capability.
 - Corrections and additions are welcome. See the repository's [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+## Privacy and data handling
+
+Answers come from the bundled references only. The skill reads its own files, sends nothing anywhere, and has no
+MCP server, hook, telemetry or backend. It writes code and queries as text and never connects to or runs anything
+against your systems. The maintenance scripts in `scripts/` are never used to answer questions. When a maintainer
+runs them, `fetch_developer_portal.py` downloads pages from developer.intacct.com, and `dump_object_definitions.py`
+signs in to the Sage Intacct XML API with credentials the maintainer sets in environment variables, to read object
+definitions from a clean developer company. Your conversation with Claude is covered by Anthropic's terms and
+privacy policy. See [PRIVACY.md](https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md) for the full
+policy.
+
 ## Disclaimer
 
 Sage and Sage Intacct are trademarks of The Sage Group plc or its affiliates. This skill is independent and not

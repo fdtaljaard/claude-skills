@@ -95,6 +95,14 @@ confirm anything that matters on the client's own database or installed SDK.
 - [`evals/evals.json`](evals/evals.json) holds test prompts per capability.
 - Corrections and additions are welcome. See the repository's [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+## Privacy and data handling
+
+Answers come from the bundled references only. The skill reads its own files, sends nothing anywhere, and has no
+MCP server, hook, telemetry or backend. It writes code and queries as text and never connects to or runs anything
+against your systems. The maintenance scripts in `scripts/` are never used to answer questions and work on local
+files only. Your conversation with Claude is covered by Anthropic's terms and privacy policy. See
+[PRIVACY.md](https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md) for the full policy.
+
 ## Disclaimer
 
 Sage 200 Evolution and Pastel Evolution are trademarks of their respective owners. This skill is independent and

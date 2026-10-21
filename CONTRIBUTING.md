@@ -47,7 +47,10 @@ Each skill's `MAINTENANCE.md` is the authoritative guide for changing it — rea
    (routing row + workflow section + a `references/<domain>/` subtree with its own `INDEX.md`), keep `SKILL.md`
    under budget, and add at least two evals (one typical, one edge case). A new skill also needs a row in
    `README.md`, a disclaimer paragraph if it bundles vendor material, and registration in
-   `.claude-plugin/marketplace.json`.
+   `.claude-plugin/marketplace.json` (`"source": "./skills/<skill-name>"`). Each skill folder is also a plugin, so
+   it needs its own `.claude-plugin/plugin.json` and `icon.png` (copy both from an existing skill and change the
+   name, description, keywords and links), and a "Privacy and data handling" section in its `README.md` that
+   names everything the skill fetches or sends. Run `claude plugin validate .` from the repository root.
 4. **Don't commit vendor source material** (CHMs, DLLs, raw SDK help). It is kept out of git (see `.gitignore`)
    and only the extracted, attributed references are committed. Respect the vendors' terms. The one exception is
    a **machine-generated contract document** that a builder needs to regenerate a reference and that carries no

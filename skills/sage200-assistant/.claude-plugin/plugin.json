@@ -1,0 +1,23 @@
+{
+  "name": "sage200-assistant",
+  "displayName": "Sage 200 Evolution Assistant",
+  "description": "Sage 200 Evolution (Pastel Evolution) ERP assistant: C# development against the Pastel.Evolution .NET SDK — connecting via DatabaseContext, the record load/set/Save() pattern, posting transactions, and generating correct code from a bundled class and enum reference extracted from the shipped SDK CHM. More capabilities to follow.",
+  "author": {
+    "name": "Francois Taljaard",
+    "url": "https://github.com/fdtaljaard"
+  },
+  "homepage": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/sage200-assistant",
+  "repository": "https://github.com/fdtaljaard/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "sage-200",
+    "pastel-evolution",
+    "erp",
+    "sdk",
+    "dotnet"
+  ],
+  "icon": "./icon.png",
+  "documentationUrl": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/sage200-assistant#readme",
+  "supportUrl": "https://github.com/fdtaljaard/claude-skills/issues",
+  "privacyPolicyUrl": "https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md"
+}

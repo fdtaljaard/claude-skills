@@ -114,6 +114,15 @@ and navigation properties found in the 2026 R2 metadata snapshot and asks you to
 - [`evals/evals.json`](evals/evals.json) holds test prompts per capability.
 - Corrections and additions are welcome. See the repository's [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+## Privacy and data handling
+
+Answers come from the bundled references only. The skill reads its own files, sends nothing anywhere, and has no
+MCP server, hook, telemetry or backend. It writes code and queries as text and never connects to or runs anything
+against your systems. The maintenance scripts in `scripts/` are never used to answer questions; when a maintainer
+runs `fetch_beacon_guide.py` it downloads guide pages from beacon.acumatica.com. Your conversation with Claude is
+covered by Anthropic's terms and privacy policy. See
+[PRIVACY.md](https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md) for the full policy.
+
 ## Disclaimer
 
 Acumatica is a trademark of Acumatica, Inc. This skill is independent and not affiliated with or endorsed by

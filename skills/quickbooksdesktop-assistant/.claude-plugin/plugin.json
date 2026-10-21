@@ -1,0 +1,23 @@
+{
+  "name": "quickbooksdesktop-assistant",
+  "displayName": "QuickBooks Desktop Assistant",
+  "description": "QuickBooks Desktop SDK assistant for developers and integrators: qbXML / QBFC C# development (QBSessionManager session lifecycle, message sets, Add/Mod/Query requests, OR aggregates, LinkToTxn, response and StatusCode handling), object and field reference (the ListID / TxnID / EditSequence model, request verbs, OR choice fields, spec versions, and a catalogue of the common lists and transactions), and setup and connectivity (QBFC vs QBXMLRP2 vs the Web Connector, open modes, app authorization, the 32-bit / STA constraints and common connection errors). Targets QuickBooks Desktop (qbXML), not QuickBooks Online. More capabilities to follow.",
+  "author": {
+    "name": "Francois Taljaard",
+    "url": "https://github.com/fdtaljaard"
+  },
+  "homepage": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/quickbooksdesktop-assistant",
+  "repository": "https://github.com/fdtaljaard/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "quickbooks-desktop",
+    "qbxml",
+    "qbfc",
+    "accounting",
+    "integration"
+  ],
+  "icon": "./icon.png",
+  "documentationUrl": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/quickbooksdesktop-assistant#readme",
+  "supportUrl": "https://github.com/fdtaljaard/claude-skills/issues",
+  "privacyPolicyUrl": "https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md"
+}

@@ -97,6 +97,18 @@ sentinel on SQL Server, and will not invent a release date it cannot cite.
 - [`evals/evals.json`](evals/evals.json) holds test prompts per capability.
 - Corrections and additions are welcome. See the repository's [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+## Privacy and data handling
+
+Answers come from the bundled references. When a question goes beyond them, the skill tells Claude to look the
+answer up in Sage's public online help (online-help.sagex3.com), using whatever web tools your Claude environment
+provides; the request carries the page address, not your prompts or data. The skill has no MCP server, hook,
+telemetry or backend, and it writes code and queries as text without connecting to or running anything against your
+systems. Claude may also run `scripts/diff_table_versions.py`, which downloads the public V11 and V12 help pages of
+one table from online-help.sagex3.com and sends only the page address and a User-Agent naming this repository. The
+other scripts in `scripts/` are maintenance only and download from the same site when a maintainer runs them. Your
+conversation with Claude is covered by Anthropic's terms and privacy policy. See
+[PRIVACY.md](https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md) for the full policy.
+
 ## Disclaimer
 
 Sage X3 is a trademark of its respective owner. This skill is independent and not affiliated with or endorsed by

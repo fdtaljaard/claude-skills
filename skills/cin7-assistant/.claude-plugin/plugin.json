@@ -1,0 +1,23 @@
+{
+  "name": "cin7-assistant",
+  "displayName": "Cin7 Assistant",
+  "description": "Cin7 inventory and order management assistant for consultants and integrators: Cin7 Core (formerly DEAR Systems) API v2 integration development from a bundled extraction of the Cin7 Core developer portal — authentication headers and per-application limits, pagination, status codes and the 60-calls-per-minute limit, UTC dates, void vs undo, sub-document overwrite semantics, sale and purchase stage preconditions, every documented endpoint (295 actions in 33 groups) with field tables, parameters, request and response bodies, status and type value lists, webhooks, and a common-mistakes checklist for reviews. Cin7 Omni not covered yet. More capabilities to follow.",
+  "author": {
+    "name": "Francois Taljaard",
+    "url": "https://github.com/fdtaljaard"
+  },
+  "homepage": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/cin7-assistant",
+  "repository": "https://github.com/fdtaljaard/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "cin7",
+    "cin7-core",
+    "inventory",
+    "rest-api",
+    "integration"
+  ],
+  "icon": "./icon.png",
+  "documentationUrl": "https://github.com/fdtaljaard/claude-skills/tree/main/skills/cin7-assistant#readme",
+  "supportUrl": "https://github.com/fdtaljaard/claude-skills/issues",
+  "privacyPolicyUrl": "https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md"
+}

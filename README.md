@@ -50,9 +50,10 @@ This just tells Claude where to find the skills. You only ever do it once.
 /plugin install acumatica-assistant@fdtaljaard-skills
 /plugin install quickbooksdesktop-assistant@fdtaljaard-skills
 /plugin install sageintacct-assistant@fdtaljaard-skills
+/plugin install cin7-assistant@fdtaljaard-skills
 ```
 
-(Pick the one for the system you work with — Sage 300, Sage 200 Evolution, SAP Business One, Sage X3, Acumatica, QuickBooks Desktop, or Sage Intacct.)
+(Pick the one for the system you work with — Sage 300, Sage 200 Evolution, SAP Business One, Sage X3, Acumatica, QuickBooks Desktop, Sage Intacct, or Cin7 Core.)
 
 **Step 3 — Just ask your question in plain English.** There's no special command to "turn it on" — the skill switches itself on whenever your question is about that product. For example: *"I need a Sage 300 view of open sales orders with the customer name and total."* Claude looks the answer up in the bundled reference and shows its working.
 
@@ -82,13 +83,25 @@ Each skill's `SKILL.md` describes when it triggers and how it works; `MAINTENANC
 
 ```
 skills/
-  <skill-name>/
+  <skill-name>/     # one skill, and one plugin in the marketplace
+    .claude-plugin/plugin.json  # plugin manifest (name, description, license, icon, links)
+    icon.png        # plugin icon
+    README.md       # what the plugin does, install steps, privacy and disclaimer
     SKILL.md        # entry point loaded on activation
     references/     # bulk reference material, read on demand
     scripts/        # maintenance tooling (not needed at runtime)
 sources/
   <skill-name>/     # scrubbed machine-generated inputs a builder needs to regenerate a reference (never packaged)
 ```
+
+## Privacy and data handling
+
+The skills are documentation only: a `SKILL.md` and bundled reference files, with no MCP server, hook, telemetry
+or backend. This project collects nothing. Answers come from the bundled references; three skills
+(`sage300-assistant`, `sagex3-assistant` and `quickbooksdesktop-assistant`) may also look up the vendor's public
+documentation when a question goes beyond them, and each skill's README says exactly what it fetches. Your
+conversation with Claude is covered by Anthropic's terms and privacy policy. The full policy is in
+[PRIVACY.md](PRIVACY.md).
 
 ## Contributing
 

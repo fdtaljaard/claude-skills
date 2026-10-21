@@ -10,58 +10,42 @@
     {
       "name": "sage300-assistant",
       "description": "Sage 300 (Accpac) ERP assistant: verified T-SQL from AOM data dictionaries, version/upgrade guidance and release notes, and C# against the ACCPAC.Advantage .NET library.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/sage300-assistant"]
+      "source": "./skills/sage300-assistant"
     },
     {
       "name": "sage200-assistant",
       "description": "Sage 200 Evolution (Pastel Evolution) ERP assistant: C# development against the Pastel.Evolution .NET SDK — connecting via DatabaseContext, the record load/set/Save() pattern, posting transactions, and generating correct code from a bundled class and enum reference extracted from the shipped SDK CHM. More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/sage200-assistant"]
+      "source": "./skills/sage200-assistant"
     },
     {
       "name": "sapb1-assistant",
       "description": "SAP Business One (B1) ERP assistant: object type number, table and primary key lookup from a bundled list of all B1 object types, verified SQL views/queries from bundled B1 10.0 and 9.3 data dictionaries, C# development against the DI API from a bundled DI API 10.0 class and enum reference, and Service Layer (REST / OData v4) integration guidance including SQLQueries and FP 2602 webhooks. More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/sapb1-assistant"]
+      "source": "./skills/sapb1-assistant"
     },
     {
       "name": "sagex3-assistant",
       "description": "Sage X3 ERP assistant: verified SQL views/queries and table/field lookup from a bundled Sage X3 V11 table dictionary (tables, abbreviations, keys, columns, data types, local-menu enum values and foreign-key link expressions) compiled from Sage's online help; versions and upgrades (V12 release/patch naming and lifecycle, platform prerequisites per release, upgrade paths and procedures, per-release notes 2023 R2 to 2026 R1 with tables touched). More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/sagex3-assistant"]
+      "source": "./skills/sagex3-assistant"
     },
     {
       "name": "acumatica-assistant",
       "description": "Acumatica ERP assistant: REST integration development against the contract-based REST API from a bundled extraction of Acumatica's Integration Development Guide (2026 R2) — sign-in and OAuth 2.0/OIDC, endpoint and contract versions, JSON record shape, query parameters per contract version, CRUD, actions and long-running operations, custom fields, files, license limits, push notifications and webhooks, with a catalogue of 187 documented example requests, and exact entity, field and action names from a snapshot of the Default/25.200.001 contract (2025 R2); OData data access — DAC-based and generic-inquiry-based OData v4 reads (URLs, auth and licence, $filter/$expand, deleted-record tracking, CORS, Excel and Power BI) from the Reporting Tools Guide (2026 R2), with a DAC $metadata snapshot of a clean 2026 R2 instance for exact DAC, field and navigation names. More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/acumatica-assistant"]
+      "source": "./skills/acumatica-assistant"
     },
     {
       "name": "quickbooksdesktop-assistant",
       "description": "QuickBooks Desktop SDK assistant for developers and integrators: qbXML / QBFC C# development (QBSessionManager session lifecycle, message sets, Add/Mod/Query requests, OR aggregates, LinkToTxn, response and StatusCode handling), object and field reference (the ListID / TxnID / EditSequence model, request verbs, OR choice fields, spec versions, and a catalogue of the common lists and transactions), and setup and connectivity (QBFC vs QBXMLRP2 vs the Web Connector, open modes, app authorization, the 32-bit / STA constraints and common connection errors). Targets QuickBooks Desktop (qbXML), not QuickBooks Online. More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/quickbooksdesktop-assistant"]
+      "source": "./skills/quickbooksdesktop-assistant"
     },
     {
       "name": "cin7-assistant",
       "description": "Cin7 inventory and order management assistant for consultants and integrators: Cin7 Core (formerly DEAR Systems) API v2 integration development from a bundled extraction of the Cin7 Core developer portal — authentication headers and per-application limits, pagination, status codes and the 60-calls-per-minute limit, UTC dates, void vs undo, sub-document overwrite semantics, sale and purchase stage preconditions, every documented endpoint (295 actions in 33 groups) with field tables, parameters, request and response bodies, status and type value lists, webhooks, and a common-mistakes checklist for reviews. Cin7 Omni not covered yet. More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/cin7-assistant"]
+      "source": "./skills/cin7-assistant"
     },
     {
       "name": "sageintacct-assistant",
       "description": "Sage Intacct cloud financial management / ERP assistant for consultants and integrators: XML Web Services API integration development from a bundled extraction of the Sage Intacct developer portal and Sage's DTD 3.0 request schema: the request envelope, sessions and endpoints, status levels and error categories with recovery, the query and readByQuery grammar and paging, date and number formats, multi-entity rules, limits and asynchronous processing, every documented object page (197 pages, 1,694 operations in 17 modules) with parameter tables, examples and release history, the 52 generic functions and 243 legacy function names, exact names and valid values from a 2026 Release 3 object-definition snapshot (632 objects, 21,342 fields), an Order Entry / Purchasing / Inventory Control guide, and a 36-rule common-mistakes checklist for reviews. The REST API is not covered yet. More capabilities to follow.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/sageintacct-assistant"]
+      "source": "./skills/sageintacct-assistant"
     }
   ]
 }

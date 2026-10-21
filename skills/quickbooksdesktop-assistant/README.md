@@ -71,6 +71,16 @@ the source of truth and tells you when to check it.
   a capability, and refresh for a new SDK version.
 - [`evals/evals.json`](evals/evals.json) holds test prompts per capability.
 
+## Privacy and data handling
+
+Answers come from the bundled references. When a question goes beyond them, the skill tells Claude to look the
+answer up in Intuit's public developer documentation (developer.intuit.com), using whatever web tools your Claude
+environment provides; the request carries the page address, not your prompts or data. The skill has no MCP server,
+hook, telemetry or backend, and it writes code and queries as text without connecting to or running anything
+against your systems. The maintenance script in `scripts/` is never used to answer questions and works on local
+files only. Your conversation with Claude is covered by Anthropic's terms and privacy policy. See
+[PRIVACY.md](https://github.com/fdtaljaard/claude-skills/blob/main/PRIVACY.md) for the full policy.
+
 ## Disclaimer
 
 QuickBooks is a trademark of Intuit Inc. This skill is independent and not affiliated with or endorsed by

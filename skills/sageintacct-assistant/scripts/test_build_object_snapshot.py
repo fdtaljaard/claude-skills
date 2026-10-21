@@ -38,7 +38,7 @@ def read(path):
         return f.read()
 
 
-def make_dump(folder, custom=False, custom_rel=False):
+def make_dump(folder, custom=False, custom_rel=False, readded=()):
     os.makedirs(os.path.join(folder, "lookup"))
     with open(os.path.join(folder, "inspect.xml"), "w", encoding="utf-8") as f:
         f.write(INSPECT)
@@ -48,7 +48,8 @@ def make_dump(folder, custom=False, custom_rel=False):
                                   extra_rel=CUSTOM_REL if (custom_rel and name == "GLBATCH") else ""))
     with open(os.path.join(folder, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump({"release": "test", "dumped": "2026-10-13T00:00:00Z", "lookups_failed": {},
-                   "custom_objects_removed": ["my_obj"], "custom_fields_removed": {"GLENTRY": ["GLE_FEE", "GLE_FROM"]}}, f)
+                   "custom_objects_removed": ["my_obj"], "custom_fields_removed": {"GLENTRY": ["GLE_FEE", "GLE_FROM"]},
+                   "readded_objects": list(readded)}, f)
 
 
 class WithIdentifiers(unittest.TestCase):
@@ -77,6 +78,9 @@ class DumpHelpers(WithIdentifiers):
         self.assertEqual([r.findtext("OBJECTNAME") for r in d.iter("Relationship")], ["JOURNAL"])
         d = ET.fromstring(LOOKUP.format(name="GLBATCH", extra="", extra_rel=""))
         self.assertEqual(dump.scrub_relationships(d, custom_objects=["JOURNAL"]), ["JOURNAL"])  # a removed custom object
+        d = ET.fromstring(LOOKUP.format(name="GLBATCH", extra="", extra_rel=CUSTOM_REL))
+        self.assertEqual(dump.scrub_relationships(d, readded=["my_udd"]), [])  # a re-added object counts as standard
+        self.assertEqual([r.findtext("OBJECTNAME") for r in d.iter("Relationship")], ["JOURNAL", "my_udd"])
 
     def test_inspect_names_collapse_and_merge(self):
         self.assertEqual(dump.inspect_names(ET.fromstring(INSPECT)), ["GLBATCH", "SODOCUMENT"])
@@ -94,6 +98,18 @@ class DumpHelpers(WithIdentifiers):
     def test_identifier_pattern_matches_whole_tokens(self):
         self.assertIsNone(dump.identifier_pattern("admin").search("<LABEL>Administrator</LABEL>"))
         self.assertIsNotNone(dump.identifier_pattern("admin").search("<LABEL>Created by ADMIN</LABEL>"))
+        self.assertIsNotNone(dump.identifier_pattern("acme").search("<LOCATIONID>ACME_US</LOCATIONID>"))  # _ separates
+
+    def test_full_dump_refuses_out_with_earlier_lookups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, "lookup"))
+            with open(os.path.join(tmp, "lookup", "APBILL.xml"), "w", encoding="utf-8") as f:
+                f.write("<data/>")
+            env = {k: v for k, v in os.environ.items() if not k.startswith("INTACCT_")}  # refused before any login
+            r = subprocess.run([sys.executable, "-I", os.path.join(HERE, "dump_object_definitions.py"), "--out", tmp],
+                               capture_output=True, text=True, env=env)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("already holds lookup files", r.stderr + r.stdout)
 
     def test_pack_counts_only_scrub_and_guards(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -191,6 +207,16 @@ class SnapshotBuilder(WithIdentifiers):
             r = self.run_builder(os.path.join(tmp, "dump"), out)
             self.assertNotEqual(r.returncode, 0)
             self.assertIn("non-standard objects survive", r.stderr + r.stdout)
+        with tempfile.TemporaryDirectory() as tmp:  # unless the related object was re-added with --objects
+            make_dump(os.path.join(tmp, "dump"), custom_rel=True, readded=["my_udd"])
+            r = self.run_builder(os.path.join(tmp, "dump"), os.path.join(tmp, "snapshot"))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("`my_udd`", read(os.path.join(tmp, "snapshot", "fields-01.md")))
+            z = os.path.join(tmp, "d.zip")  # and the pack keeps it too
+            dump.pack(os.path.join(tmp, "dump"), z)
+            with zipfile.ZipFile(z) as zf:
+                self.assertIn("my_udd", zf.read("lookup/GLBATCH.xml").decode())
+                self.assertEqual(json.loads(zf.read("manifest.json"))["custom_relationships_removed"], {})
 
 
 if __name__ == "__main__":

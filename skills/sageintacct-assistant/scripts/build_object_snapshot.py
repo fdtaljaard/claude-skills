@@ -129,11 +129,16 @@ def build(args, dump, source_label):
     if not names:
         sys.exit("no lookup/*.xml in the dump")
 
+    readded = set(manifest.get("readded_objects", []))  # standard objects re-added with --objects despite their name
+
+    def standard(name):
+        return bool(STANDARD_NAME.match(name)) or name in readded
+
     entries, custom_left, odd_rels, total_fields, total_rels = [], [], [], 0, 0
     for n in names:
         fields, rels = parse_lookup(os.path.join(lookup_dir, n + ".xml"))
         custom_left += [f"{n}.{f['id']}" for f in fields if f["iscustom"].lower() in ("true", "1", "t")]
-        odd_rels += [f"{n} -> {r['object'] or r['path']}" for r in rels if not STANDARD_NAME.match(r["object"] or r["path"])]
+        odd_rels += [f"{n} -> {r['object'] or r['path']}" for r in rels if not standard(r["object"] or r["path"])]
         total_fields += len(fields)
         total_rels += len(rels)
         entries.append((n, labels.get(n, ""), fields, rels, render_object(n, labels.get(n, ""), fields, rels)))

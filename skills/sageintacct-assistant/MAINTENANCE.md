@@ -111,13 +111,15 @@ developer or implementation company**, never a customer's.
    objects removed), `lookup/<OBJECT>.xml` (one `<data>` per object, `ISCUSTOM` fields and relationships to
    non-standard objects removed), `dropped.txt` (everything removed, for review) and `manifest.json` (release, date,
    counts, failures, gateway host). The `<control>` block of each response (sender ID), company ID and user ID are
-   never written. Python 3.10 or later; stdlib only.
+   never written. `--out` must not already hold lookup files (use a new folder per dump). Python 3.10 or later;
+   stdlib only.
 2. **Review `dropped.txt` and grep the output** for the company name, user names and any identifier of the
    company before it leaves the machine. Objects whose name is not upper-case letters, digits and underscores are
    treated as Platform Services custom objects and dropped; if a standard object was dropped by that rule, add it
-   back with `--objects NAME` into the **same** `--out`: the run looks up only that object, restores its entry in
-   `inspect.xml` and merges the manifest (counts updated, the name moved from `custom_objects_removed` to
-   `readded_objects`) instead of replacing it. `inspect` lists `SODOCUMENT`, `PODOCUMENT`, `INVDOCUMENT`, their line objects and
+   back with `--objects NAME` into the **same** `--out`: the run looks up that object again, together with the
+   objects whose relationships to it were scrubbed, restores its entry in `inspect.xml` and merges the manifest
+   (counts updated, the name moved from `custom_objects_removed` to `readded_objects`, which the pack and the
+   snapshot builder then treat as standard) instead of replacing it. `inspect` lists `SODOCUMENT`, `PODOCUMENT`, `INVDOCUMENT`, their line objects and
    the recurring variants once per transaction definition, labelled with the definition's name: the pack step keeps
    only the first (generic) entry, so definition names never enter the repository.
 3. **Pack and commit the scrubbed dump**:
